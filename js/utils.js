@@ -3,9 +3,11 @@ import { auth } from './auth.js';
 
 // Utility functions
 function formatCurrency(amount) {
-  return new Intl.NumberFormat('en-US', {
+  if (isNaN(amount)) return "₹0.00";
+  return new Intl.NumberFormat('en-IN', {
     style: 'currency',
-    currency: 'USD'
+    currency: 'INR',
+    minimumFractionDigits: 2
   }).format(amount);
 }
 
