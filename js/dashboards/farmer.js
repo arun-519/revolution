@@ -500,7 +500,8 @@ export const farmerDashboard = {
     document.getElementById('dashboard-content').innerHTML = content;
   },
 
-  updateOrderStatus(orderId, status) {
+  
+updateOrderStatus(orderId, status) {
     const data = getData();
     const order = data.orders.find(o => o.id === orderId);
     if (order) {
@@ -508,7 +509,16 @@ export const farmerDashboard = {
       saveData(data);
       showNotification(`Order #${orderId} status updated to ${status}`);
       this.showOrders();
-    }
+    
+      // If farmer sets status to delivered, trigger receipt + email
+      try {
+        if (status === 'delivered' && !order.receiptSent) {
+          handleDelivered(order);
+          order.receiptSent = true;
+          saveData(data);
+        }
+      } catch(e) { console.error("handleDelivered error:", e); }
+}
   },
 
   showAnalytics() {
