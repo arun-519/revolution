@@ -500,25 +500,19 @@ export const farmerDashboard = {
     document.getElementById('dashboard-content').innerHTML = content;
   },
 
-  
-updateOrderStatus(orderId, status) {
+  updateOrderStatus(orderId, status) {
     const data = getData();
-    const order = data.orders.find(o => o.id === orderId);
+    // normalize types so matching works whether id is string or number
+    const order = data.orders.find(o => String(o.id) === String(orderId));
     if (order) {
       order.status = status;
       saveData(data);
       showNotification(`Order #${orderId} status updated to ${status}`);
       this.showOrders();
-    
-      // If farmer sets status to delivered, trigger receipt + email
-      try {
-        if (status === 'delivered' && !order.receiptSent) {
-          handleDelivered(order);
-          order.receiptSent = true;
-          saveData(data);
-        }
-      } catch(e) { console.error("handleDelivered error:", e); }
-}
+    } else {
+      console.error('Order not found when trying to update status:', orderId, data.orders);
+      showNotification('Failed to update order status (order not found)', 'error');
+    }
   },
 
   showAnalytics() {
@@ -686,3 +680,6 @@ updateOrderStatus(orderId, status) {
     });
   }
 };
+
+// Ensure farmerDashboard is available on window for inline event handlers
+if (typeof window !== 'undefined') window.farmerDashboard = farmerDashboard;
