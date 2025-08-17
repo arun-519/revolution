@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farm to Door Platform</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/auth.css">
+    <link rel="stylesheet" href="styles/dashboard.css">
+    <link rel="stylesheet" href="styles/components.css">
+</head>
+<body>
+    <!-- Authentication Screen -->
+    <div id="auth-screen" class="screen active">
+        <div class="auth-container">
+            <div class="auth-header">
+                <h1>🌾 Farm to Door</h1>
+                <p>Fresh produce delivered directly from farm to your doorstep</p>
+            </div>
+            
+            <div class="auth-tabs">
+                <button class="tab-button active" data-tab="login">Login</button>
+                <button class="tab-button" data-tab="register">Register</button>
+            </div>
+
+            <!-- Login Form -->
+            <div id="login-form" class="auth-form active">
+                <h2>Welcome Back</h2>
+                <form>
+                    <div class="form-group">
+                        <label for="login-email">Email</label>
+                        <input type="email" id="login-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Password</label>
+                        <input type="password" id="login-password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-role">Login as</label>
+                        <select id="login-role" required>
+                            <option value="">Select role</option>
+                            <option value="user">Customer</option>
+                            <option value="farmer">Farmer</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-primary">Login</button>
+                </form>
+                
+                <div class="demo-accounts">
+                    <p>Demo Accounts:</p>
+                    <div class="demo-buttons">
+                        <button class="demo-btn" data-role="user">Demo Customer</button>
+                        <button class="demo-btn" data-role="farmer">Demo Farmer</button>
+                        <button class="demo-btn" data-role="admin">Demo Admin</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Register Form -->
+            <div id="register-form" class="auth-form">
+                <h2>Join Our Platform</h2>
+                <form>
+                    <div class="form-group">
+                        <label for="register-name">Full Name</label>
+                        <input type="text" id="register-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-email">Email</label>
+                        <input type="email" id="register-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-password">Password</label>
+                        <input type="password" id="register-password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-role">Register as</label>
+                        <select id="register-role" required>
+                            <option value="">Select role</option>
+                            <option value="user">Customer</option>
+                            <option value="farmer">Farmer</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-primary">Register</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Screen -->
+    <div id="dashboard-screen" class="screen">
+        <nav class="navbar">
+            <div class="nav-brand">
+                <h2>🌾 Farm to Door</h2>
+            </div>
+            <div class="nav-actions">
+                <span id="user-name" class="user-name"></span>
+                <button id="logout-btn" class="btn-secondary">Logout</button>
+            </div>
+        </nav>
+
+        <div class="dashboard-container">
+            <aside class="sidebar" id="sidebar">
+                <div class="sidebar-content">
+                    <!-- Dynamic menu items will be inserted here -->
+                </div>
+            </aside>
+
+            <main class="main-content">
+                <div id="dashboard-content">
+                    <!-- Dynamic content will be inserted here -->
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Cart Modal -->
+    <div id="cart-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Shopping Cart</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="cart-items"></div>
+                <div class="cart-total">
+                    <strong>Total: $<span id="cart-total">0.00</span></strong>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="checkout-btn" class="btn-primary">Checkout</button>
+                <button class="modal-close btn-secondary">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
