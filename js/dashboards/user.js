@@ -2,6 +2,111 @@ import { auth } from '../auth.js';
 import { getData, saveData } from '../data.js';
 import { formatCurrency, formatDate, showNotification, debounce, cart } from '../utils.js';
 
+
+
+// ==== Email & Receipt Integration (Frontend-only) ====
+// Dynamically load external libraries if missing
+const __extLibs = {
+  emailjs: "https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js",
+  jspdf: "https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"
+};
+
+function __loadScriptOnce(url) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${url}"]`)) return resolve();
+    const s = document.createElement("script");
+    s.src = url; s.async = true;
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error("Failed to load " + url));
+    document.head.appendChild(s);
+  });
+}
+
+// Load libs and init EmailJS
+(async () => {
+  try {
+    await __loadScriptOnce(__extLibs.jspdf);
+    await __loadScriptOnce(__extLibs.emailjs);
+    if (window.emailjs && !window.__emailjs_inited) {
+      // TODO: Replace the public key below with your EmailJS Public Key
+      emailjs.init("REPLACE_WITH_YOUR_EMAILJS_PUBLIC_KEY");
+      window.__emailjs_inited = true;
+      console.log("[EmailJS] initialized");
+    }
+  } catch (e) {
+    console.warn("[Init] External libs failed to load:", e);
+  }
+})();
+
+/**
+ * Sends the "order placed" email with required fields.
+ */
+function sendOrderEmail(order) {
+  try {
+    if (!window.emailjs) return console.warn("EmailJS not loaded; skipping sendOrderEmail");
+    const templateParams = {
+      order_id: order.id,
+      customer_name: order.userName,
+      product_name: (order.items || []).map(i => i.name).join(", "),
+      order_date: order.orderDate,
+      amount: (order.orderSummary ? order.orderSummary.total : order.total) || 0,
+      company_name: "FarmFresh Agro"
+    };
+    // TODO: Replace with your EmailJS Service and Template IDs
+    emailjs.send("REPLACE_WITH_YOUR_SERVICE_ID", "REPLACE_WITH_YOUR_TEMPLATE_ID", templateParams)
+      .then(() => console.log("✅ Order email sent for #", order.id))
+      .catch(err => console.error("❌ sendOrderEmail failed:", err));
+  } catch (e) {
+    console.error("sendOrderEmail error:", e);
+  }
+}
+
+/**
+ * Generates a PDF receipt and sends a delivery email when order is delivered.
+ */
+function handleDelivered(order) {
+  try {
+    if (window.jspdf) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const productNames = (order.items || []).map(i => `${i.name} x${i.quantity || 1}`).join(", ");
+      const totalAmount = (order.orderSummary ? order.orderSummary.total : order.total) || 0;
+
+      doc.setFontSize(16);
+      doc.text("Order Receipt", 10, 12);
+      doc.setFontSize(12);
+      doc.text(`Order ID: ${order.id}`, 10, 24);
+      doc.text(`Customer: ${order.userName}`, 10, 32);
+      doc.text(`Product(s): ${productNames}`, 10, 40);
+      doc.text(`Amount: ₹${totalAmount}`, 10, 48);
+      doc.text(`Status: Delivered`, 10, 56);
+      doc.text(`Order Date: ${order.orderDate}`, 10, 64);
+      doc.text("Thank you for shopping with FarmFresh Agro", 10, 80);
+      doc.save(`Receipt_${order.id}.pdf`);
+    } else {
+      console.warn("jsPDF not loaded; skipping PDF generation");
+    }
+
+    if (window.emailjs) {
+      const templateParams = {
+        order_id: order.id,
+        customer_name: order.userName,
+        product_name: (order.items || []).map(i => i.name).join(", "),
+        order_date: order.orderDate,
+        amount: (order.orderSummary ? order.orderSummary.total : order.total) || 0,
+        company_name: "FarmFresh Agro"
+      };
+      emailjs.send("REPLACE_WITH_YOUR_SERVICE_ID", "REPLACE_WITH_YOUR_TEMPLATE_ID", templateParams)
+        .then(() => console.log("✅ Delivery email sent for #", order.id))
+        .catch(err => console.error("❌ Delivery email failed:", err));
+    } else {
+      console.warn("EmailJS not loaded; skipping delivery email");
+    }
+  } catch (e) {
+    console.error("handleDelivered error:", e);
+  }
+}
+
 export const userDashboard = {
   menuItems: [
     { id: 'browse-products', label: '🛒 Browse Products', active: true },
@@ -232,6 +337,28 @@ export const userDashboard = {
         });
       });
     });
+
+// Auto-generate receipt + email once when an order becomes delivered
+try {
+  const dataAuto = getData();
+  const currentUser = auth.getCurrentUser();
+  const myOrders = dataAuto.orders.filter(o => o.userId === currentUser.id);
+  let changed = false;
+  myOrders.forEach(o => {
+    if (o.status === 'delivered' && !o.receiptSent) {
+      handleDelivered(o);
+      o.receiptSent = true; // prevent duplicate receipts
+      changed = true;
+    }
+  });
+  if (changed) {
+    saveData(dataAuto);
+    try { showNotification('Receipt downloaded & email sent for delivered orders'); } catch(_){}
+  }
+} catch (e) {
+  console.warn("Auto receipt check failed:", e);
+}
+
   },
 
   submitRating(orderId, farmerId) {
@@ -636,6 +763,7 @@ document.getElementById('pay-upi').addEventListener('click', () => {
     }
     
     showNotification('Order placed successfully!');
+    try { sendOrderEmail(newOrder); } catch(e){ console.error(e); }
     this.showOrderConfirmation(newOrder);
   },
   
